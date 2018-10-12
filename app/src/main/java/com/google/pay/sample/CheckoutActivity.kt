@@ -8,7 +8,7 @@ import kotlinx.android.synthetic.main.activity_main.*
 class CheckoutActivity : Activity() {
 
     //a client for interacting with the Google Pay API.
-    private var mPaymentsClient: PaymentsClient? = null
+    private var paymentsClient: PaymentsClient? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
