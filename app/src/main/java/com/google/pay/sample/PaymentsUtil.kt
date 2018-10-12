@@ -113,4 +113,110 @@ object PaymentsUtil {
         }
 
     }
+
+    /**
+     * An object describing information requested in a Google Pay payment sheet
+     *
+     * @return Payment data expected by your app.
+     * @see [PaymentDataRequest](https://developers.google.com/pay/api/android/reference/object.PaymentDataRequest)
+     */
+    fun getPaymentDataRequest(price: String): Optional<JSONObject> {
+        try {
+            val paymentDataRequest = PaymentsUtil.getBaseRequest()
+            paymentDataRequest.put(
+                "allowedPaymentMethods", JSONArray().put(PaymentsUtil.getCardPaymentMethod())
+            )
+            paymentDataRequest.put("transactionInfo", PaymentsUtil.getTransactionInfo(price))
+            paymentDataRequest.put("merchantInfo", PaymentsUtil.getMerchantInfo())
+
+            /* An optional shipping address requirement is a top-level property of the PaymentDataRequest
+      JSON object. */
+            paymentDataRequest.put("shippingAddressRequired", true)
+
+            val shippingAddressParameters = JSONObject()
+            shippingAddressParameters.put("phoneNumberRequired", false)
+
+            val allowedCountryCodes = JSONArray(SHIPPING_SUPPORTED_COUNTRIES)
+
+            shippingAddressParameters.put("allowedCountryCodes", allowedCountryCodes)
+            paymentDataRequest.put("shippingAddressParameters", shippingAddressParameters)
+            return Optional.of(paymentDataRequest)
+        } catch (e: JSONException) {
+            return Optional.empty()
+        }
+    }
+
+    /**
+     * Information about the merchant requesting payment information
+     *
+     * @return Information about the merchant.
+     * @throws JSONException
+     * @see [MerchantInfo](https://developers.google.com/pay/api/android/reference/object.MerchantInfo)
+     */
+    @Throws(JSONException::class)
+    private fun getMerchantInfo(): JSONObject {
+        return JSONObject().put("merchantName", "Example Merchant")
+    }
+
+    /**
+     * Provide Google Pay API with a payment amount, currency, and amount status.
+     *
+     * @return information about the requested payment.
+     * @throws JSONException
+     * @see [TransactionInfo](https://developers.google.com/pay/api/android/reference/object.TransactionInfo)
+     */
+    @Throws(JSONException::class)
+    private fun getTransactionInfo(price: String): JSONObject {
+        val transactionInfo = JSONObject()
+        transactionInfo.put("totalPrice", price)
+        transactionInfo.put("totalPriceStatus", "FINAL")
+        transactionInfo.put("currencyCode", CURRENCY_CODE)
+
+        return transactionInfo
+    }
+
+    /**
+     * Describe the expected returned payment data for the CARD payment method
+     *
+     * @return A CARD PaymentMethod describing accepted cards and optional fields.
+     * @throws JSONException
+     * @see [PaymentMethod](https://developers.google.com/pay/api/android/reference/object.PaymentMethod)
+     */
+    @Throws(JSONException::class)
+    private fun getCardPaymentMethod(): JSONObject {
+        val cardPaymentMethod = getBaseCardPaymentMethod()
+        cardPaymentMethod.put("tokenizationSpecification", getGatewayTokenizationSpecification())
+
+        return cardPaymentMethod
+    }
+
+    /**
+     * Gateway Integration: Identify your gateway and your app's gateway merchant identifier.
+     *
+     *
+     * The Google Pay API response will return an encrypted payment method capable of being charged
+     * by a supported gateway after payer authorization.
+     *
+     *
+     * TODO: Check with your gateway on the parameters to pass and modify them in Constants.java.
+     *
+     * @return Payment data tokenization for the CARD payment method.
+     * @throws JSONException
+     * @see [PaymentMethodTokenizationSpecification](https://developers.google.com/pay/api/android/reference/object.PaymentMethodTokenizationSpecification)
+     */
+    @Throws(JSONException::class, RuntimeException::class)
+    private fun getGatewayTokenizationSpecification(): JSONObject {
+        if (PAYMENT_GATEWAY_TOKENIZATION_PARAMETERS.isEmpty()) {
+            throw RuntimeException(
+                "Please edit the Constants.java file to add gateway name and other parameters your " + "processor requires"
+            )
+        }
+        val tokenizationSpecification = JSONObject()
+
+        tokenizationSpecification.put("type", "PAYMENT_GATEWAY")
+        val parameters = JSONObject(PAYMENT_GATEWAY_TOKENIZATION_PARAMETERS)
+        tokenizationSpecification.put("parameters", parameters)
+
+        return tokenizationSpecification
+    }
 }

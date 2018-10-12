@@ -5,10 +5,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import com.google.android.gms.common.api.ApiException
-import com.google.android.gms.tasks.OnCompleteListener
-import com.google.android.gms.tasks.Task
-import com.google.android.gms.wallet.IsReadyToPayRequest
-import com.google.android.gms.wallet.PaymentsClient
+import com.google.android.gms.wallet.*
 import kotlinx.android.synthetic.main.activity_main.*
 
 class CheckoutActivity : Activity() {
@@ -19,12 +16,20 @@ class CheckoutActivity : Activity() {
     private val bikeItem = ItemInfo("Simple Bike", 300 * 1000000, R.drawable.bike)
     private val shippingCost = (90 * 1000000).toLong()
 
+    /**
+     * Arbitrarily-picked constant integer you define to track a request for payment data activity.
+     *
+     * @value #LOAD_PAYMENT_DATA_REQUEST_CODE
+     */
+    private val LOAD_PAYMENT_DATA_REQUEST_CODE = 991
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         initViews()
         initPaymentsClient()
-        possiblyShowGooglePayButton();
+        possiblyShowGooglePayButton()
+        googlepay_button.setOnClickListener { view -> requestPayment(view) }
     }
 
     private fun initViews() {
@@ -77,6 +82,34 @@ class CheckoutActivity : Activity() {
             googlepay_button.visibility = View.VISIBLE
         } else {
             googlepay_status.setText(R.string.googlepay_status_unavailable)
+        }
+    }
+
+    // This method is called when the Pay with Google button is clicked.
+    fun requestPayment(view: View) {
+        // Disables the button to prevent multiple clicks.
+        googlepay_button.isClickable = false
+
+        // The price provided to the API should include taxes and shipping.
+        // This price is not displayed to the user.
+        val price = PaymentsUtil.microsToString(bikeItem.priceMicros + shippingCost)
+
+        // TransactionInfo transaction = PaymentsUtil.createTransaction(price);
+        val paymentDataRequestJson = PaymentsUtil.getPaymentDataRequest(price)
+        if (!paymentDataRequestJson.isPresent) {
+            return
+        }
+        val request = PaymentDataRequest.fromJson(paymentDataRequestJson.get().toString())
+
+        // Since loadPaymentData may show the UI asking the user to select a payment method, we use
+        // AutoResolveHelper to wait for the user interacting with it. Once completed,
+        // onActivityResult will be called with the result.
+        if (request != null) {
+            paymentsClient?.loadPaymentData(request)?.let {
+                AutoResolveHelper.resolveTask<PaymentData>(
+                    it, this, LOAD_PAYMENT_DATA_REQUEST_CODE
+                )
+            }
         }
     }
 }

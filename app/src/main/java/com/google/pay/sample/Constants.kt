@@ -50,7 +50,7 @@ const val CURRENCY_CODE = "USD"
  *
  * @value #SHIPPING_SUPPORTED_COUNTRIES
  */
-val SHIPPING_SUPPORTED_COUNTRIES = Arrays.asList("US", "GB")
+val SHIPPING_SUPPORTED_COUNTRIES = Arrays.asList("US", "GB", "RU")
 
 /**
  * The name of your payment processor/gateway. Please refer to their documentation for more
