@@ -10,6 +10,9 @@ class CheckoutActivity : Activity() {
     //a client for interacting with the Google Pay API.
     private var paymentsClient: PaymentsClient? = null
 
+    private val bikeItem = ItemInfo("Simple Bike", 300 * 1000000, R.drawable.bike)
+    private val shippingCost = (90 * 1000000).toLong()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
