@@ -32,7 +32,7 @@ val SUPPORTED_NETWORKS = Arrays.asList(
  *
  * @value #SUPPORTED_METHODS
  */
-val SUPPORTED_METHODS = Arrays.asList(
+val SUPPORTED_METHODS: MutableList<String> = Arrays.asList(
     "PAN_ONLY",
     "CRYPTOGRAM_3DS"
 )
