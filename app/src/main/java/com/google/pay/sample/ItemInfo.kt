@@ -7,6 +7,6 @@ package com.google.pay.sample
  */
 data class ItemInfo(
     val name: String,
-    val imageResourceId: Int,
-    var priceMicros: Long = 0
+    var priceMicros: Long = 0,
+    val imageResourceId: Int
 )
