@@ -10,7 +10,7 @@ import java.util.*
  *
  * @value #PAYMENTS_ENVIRONMENT
  */
-val PAYMENTS_ENVIRONMENT = WalletConstants.ENVIRONMENT_TEST
+const val PAYMENTS_ENVIRONMENT = WalletConstants.ENVIRONMENT_TEST
 
 /**
  * The allowed networks to be requested from the API. If the user has cards from networks not
@@ -42,7 +42,7 @@ val SUPPORTED_METHODS = Arrays.asList(
  *
  * @value #CURRENCY_CODE Your local currency
  */
-val CURRENCY_CODE = "USD"
+const val CURRENCY_CODE = "USD"
 
 /**
  * Supported countries for shipping (use ISO 3166-1 alpha-2 country codes). Relevant only when
@@ -58,7 +58,7 @@ val SHIPPING_SUPPORTED_COUNTRIES = Arrays.asList("US", "GB")
  *
  * @value #PAYMENT_GATEWAY_TOKENIZATION_NAME
  */
-val PAYMENT_GATEWAY_TOKENIZATION_NAME = "example"
+const val PAYMENT_GATEWAY_TOKENIZATION_NAME = "example"
 
 /**
  * Custom parameters required by the processor/gateway.
@@ -82,7 +82,7 @@ val PAYMENT_GATEWAY_TOKENIZATION_PARAMETERS: HashMap<String, String> = object : 
  *
  * @value #DIRECT_TOKENIZATION_PUBLIC_KEY
  */
-val DIRECT_TOKENIZATION_PUBLIC_KEY = "REPLACE_ME"
+const val DIRECT_TOKENIZATION_PUBLIC_KEY = "REPLACE_ME"
 
 /**
  * Parameters required for `DIRECT` tokenization.
