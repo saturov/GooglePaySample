@@ -1,12 +1,17 @@
 package com.google.pay.sample
 
 import android.app.Activity
+import android.app.AlertDialog
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.widget.Toast
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.wallet.*
 import kotlinx.android.synthetic.main.activity_main.*
+import org.json.JSONException
+import org.json.JSONObject
 
 class CheckoutActivity : Activity() {
 
@@ -29,7 +34,41 @@ class CheckoutActivity : Activity() {
         initViews()
         initPaymentsClient()
         possiblyShowGooglePayButton()
-        googlepay_button.setOnClickListener { view -> requestPayment(view) }
+        googlepay_button.setOnClickListener { requestPayment() }
+    }
+
+    /**
+     * Handle a resolved activity from the Google Pay payment sheet.
+     *
+     * @param requestCode Request code originally supplied to AutoResolveHelper in requestPayment().
+     * @param resultCode Result code returned by the Google Pay API.
+     * @param data Intent from the Google Pay API containing payment or error data.
+     * @see [Getting a result
+     * from an Activity](https://developer.android.com/training/basics/intents/result)
+     */
+    public override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
+        when (requestCode) {
+            // value passed in AutoResolveHelper
+            LOAD_PAYMENT_DATA_REQUEST_CODE -> {
+                when (resultCode) {
+                    Activity.RESULT_OK -> {
+                        val paymentData = PaymentData.getFromIntent(data)
+                        handlePaymentSuccess(paymentData!!)
+                    }
+                    Activity.RESULT_CANCELED -> {
+                    }
+                    AutoResolveHelper.RESULT_ERROR -> {
+                        val status = AutoResolveHelper.getStatusFromIntent(data)
+                        handleError(status!!.statusCode)
+                    }
+                }// Nothing to here normally - the user simply cancelled without selecting a
+                // payment method.
+                // Do nothing.
+
+                // Re-enables the Google Pay payment button.
+                googlepay_button.isClickable = true
+            }
+        }
     }
 
     private fun initViews() {
@@ -86,7 +125,7 @@ class CheckoutActivity : Activity() {
     }
 
     // This method is called when the Pay with Google button is clicked.
-    fun requestPayment(view: View) {
+    fun requestPayment() {
         // Disables the button to prevent multiple clicks.
         googlepay_button.isClickable = false
 
@@ -111,5 +150,66 @@ class CheckoutActivity : Activity() {
                 )
             }
         }
+    }
+
+    /**
+     * PaymentData response object contains the payment information, as well as any additional
+     * requested information, such as billing and shipping address.
+     *
+     * @param paymentData A response object returned by Google after a payer approves payment.
+     * @see [Payment
+     * Data](https://developers.google.com/pay/api/android/reference/object.PaymentData)
+     */
+    private fun handlePaymentSuccess(paymentData: PaymentData) {
+        val paymentInformation = paymentData.toJson() ?: return
+
+        // Token will be null if PaymentDataRequest was not constructed using fromJson(String).
+        val paymentMethodData: JSONObject
+
+        try {
+            paymentMethodData = JSONObject(paymentInformation).getJSONObject("paymentMethodData")
+            // If the gateway is set to "example", no payment information is returned - instead, the
+            // token will only consist of "examplePaymentMethodToken".
+            if (paymentMethodData
+                    .getJSONObject("tokenizationData")
+                    .getString("type") == "PAYMENT_GATEWAY" && paymentMethodData
+                    .getJSONObject("tokenizationData")
+                    .getString("token") == "examplePaymentMethodToken"
+            ) {
+                val alertDialog = AlertDialog.Builder(this)
+                    .setTitle("Warning")
+                    .setMessage(
+                        "Gateway name set to \"example\" - please modify " + "Constants.java and replace it with your own gateway."
+                    )
+                    .setPositiveButton("OK", null)
+                    .create()
+                alertDialog.show()
+            }
+
+            val billingName = paymentMethodData.getJSONObject("info").getJSONObject("billingAddress").getString("name")
+            Log.d("BillingName", billingName)
+            Toast.makeText(this, getString(R.string.payments_show_name, billingName), Toast.LENGTH_LONG)
+                .show()
+
+            // Logging token string.
+            Log.d("GooglePaymentToken", paymentMethodData.getJSONObject("tokenizationData").getString("token"))
+        } catch (e: JSONException) {
+            Log.e("handlePaymentSuccess", "Error: " + e.toString())
+            return
+        }
+
+    }
+
+    /**
+     * At this stage, the user has already seen a popup informing them an error occurred. Normally,
+     * only logging is required.
+     *
+     * @param statusCode will hold the value of any constant from CommonStatusCode or one of the
+     * WalletConstants.ERROR_CODE_* constants.
+     * @see [
+     * Wallet Constants Library](https://developers.google.com/android/reference/com/google/android/gms/wallet/WalletConstants.constant-summary)
+     */
+    private fun handleError(statusCode: Int) {
+        Log.w("loadPaymentData failed", String.format("Error code: %d", statusCode))
     }
 }
