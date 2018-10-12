@@ -1,5 +1,8 @@
 package com.google.pay.sample
 
+import android.app.Activity
+import com.google.android.gms.wallet.PaymentsClient
+import com.google.android.gms.wallet.Wallet
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -29,6 +32,17 @@ object PaymentsUtil {
     @Throws(JSONException::class)
     private fun getBaseRequest() =
         JSONObject().put("apiVersion", 2).put("apiVersionMinor", 0)
+
+    /**
+     * Creates an instance of [PaymentsClient] for use in an [Activity] using the
+     * environment and theme set in [Constants].
+     *
+     * @param activity is the caller's activity.
+     */
+    fun createPaymentsClient(activity: Activity): PaymentsClient {
+        val walletOptions = Wallet.WalletOptions.Builder().setEnvironment(PAYMENTS_ENVIRONMENT).build()
+        return Wallet.getPaymentsClient(activity, walletOptions)
+    }
 
     /**
      * Describe your app's support for the CARD payment method.
